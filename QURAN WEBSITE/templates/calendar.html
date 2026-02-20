@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header">
+        <h1>التقويم الهجري</h1>
+        <p>عرض التاريخ الهجري وتحويل التواريخ</p>
+    </div>
+
+    <div style="max-width:520px;margin:0 auto;">
+        {% if hijri_date %}
+        <div class="card text-center mb-3" style="padding:2.5rem;">
+            <p class="text-secondary mb-1">التاريخ الهجري اليوم</p>
+            <p class="arabic-heading" style="font-size:2.5rem;color:var(--primary-500);">{{ hijri_date.formatted }}</p>
+            <p class="text-secondary" style="font-size:0.82rem;margin-top:0.5rem;">
+                ⚠️ قد يختلف التاريخ بيوم واحد من منطقة لأخرى تبعاً لرؤية الهلال
+            </p>
+        </div>
+        {% endif %}
+
+        <div class="card" style="padding:2rem;">
+            <h3 class="mb-2">محوّل التاريخ</h3>
+
+            <div class="settings-group">
+                <label class="settings-label">التاريخ الميلادي</label>
+                <input type="date" id="gregDate" class="select-input">
+            </div>
+
+            <div class="settings-group">
+                <label class="settings-label">المنطقة (لضبط فارق الرؤية)</label>
+                <select id="regionSelect" class="select-input">
+                    <option value="0">الحساب الفلكي (الافتراضي)</option>
+                    <option value="1">المملكة العربية السعودية والخليج (+يوم)</option>
+                    <option value="-1">شمال أفريقيا والمنطقة التي تتأخر يوماً (−يوم)</option>
+                </select>
+            </div>
+
+            <button onclick="convertDate()" class="btn btn-primary" style="width:100%;">تحويل إلى هجري</button>
+
+            <div id="convertResult" class="hidden mt-2"
+                style="padding:1.25rem;background:var(--bg-tertiary);border-radius:12px;text-align:center;">
+                <p class="arabic-heading" style="font-size:1.75rem;color:var(--primary-500);" id="convertOutput"></p>
+            </div>
+        </div>
+
+        <div class="card mt-3"
+            style="padding:1.25rem;background:var(--bg-tertiary);font-size:0.85rem;color:var(--text-secondary);">
+            <strong>ملاحظة:</strong> يعتمد التقويم الهجري على رؤية الهلال وقد يختلف التاريخ من بلد لآخر بيوم واحد.
+            اختر منطقتك للحصول على التاريخ الأقرب لبلدك.
+        </div>
+    </div>
+</div>
+
+<script>
+    function convertDate() {
+        const val = document.getElementById('gregDate').value;
+        const adj = document.getElementById('regionSelect').value;
+        if (!val) {
+            if (typeof showToast === 'function') showToast('اختر تاريخاً أولاً', 'warning');
+            else alert('اختر تاريخاً');
+            return;
+        }
+        fetch('/api/convert-date?date=' + val + '&adj=' + adj)
+            .then(r => r.json())
+            .then(data => {
+                if (data.formatted) {
+                    document.getElementById('convertOutput').textContent = data.formatted;
+                    document.getElementById('convertResult').classList.remove('hidden');
+                } else {
+                    if (typeof showToast === 'function') showToast(data.error || 'خطأ في التحويل', 'error');
+                    else alert(data.error || 'خطأ في التحويل');
+                }
+            })
+            .catch(() => {
+                if (typeof showToast === 'function') showToast('تعذر الاتصال بالخادم', 'error');
+            });
+    }
+</script>
+{% endblock %}

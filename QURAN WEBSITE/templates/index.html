@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title fade-in-up">القرآن الكريم والسنة النبوية</h1>
+            <p class="hero-subtitle fade-in-up delay-1">منصة إسلامية متكاملة بتصميم عصري وتجربة مستخدم فريدة</p>
+
+            <!-- Search -->
+            <div class="search-container fade-in-up delay-2">
+                <form action="/quran/search" method="get">
+                    <input type="text" name="q" class="search-input"
+                        placeholder="ابحث في القرآن الكريم... (مثال: الرحمة)">
+                </form>
+            </div>
+
+            <!-- Verse of the Day (VIP Feature) -->
+            <div class="vod-card fade-in-up delay-3" id="vodCard">
+                <div class="vod-label">🌟 آية اليوم</div>
+                <div class="vod-text" id="vodText" style="min-height:3rem;">جاري التحميل...</div>
+                <a href="#" class="vod-link" id="vodLink">
+                    <span class="vod-surah" id="vodSurah">—</span>
+                    <span class="vod-arrow">←</span>
+                </a>
+            </div>
+            <script>
+                fetch('/api/vod').then(r => r.json()).then(data => {
+                    if (data.text) {
+                        document.getElementById('vodText').textContent = data.text;
+                        document.getElementById('vodSurah').textContent = `سورة ${data.surah} — آية ${data.ayah}`;
+                        document.getElementById('vodLink').href = data.link;
+                    }
+                }).catch(() => {
+                    document.getElementById('vodText').textContent = 'بِسْمِ اللَّـهِ الرَّحْمَـٰنِ الرَّحِيمِ';
+                });
+            </script>
+        </div>
+    </div>
+</section>
+
+<!-- Features Grid -->
+<section class="features py-4">
+    <div class="container px-4">
+        <h2 class="section-title text-center mb-4">خدمات الموقع</h2>
+        <div class="grid grid-3 mobile-grid-2">
+            <a href="/quran" class="card feature-card">
+                <div class="feature-icon">📖</div>
+                <h3>القرآن الكريم</h3>
+                <p>تصفح المصحف كاملاً مع التفسير والترجمة</p>
+            </a>
+
+            <a href="/hadith" class="card feature-card">
+                <div class="feature-icon">📚</div>
+                <h3>الحديث الشريف</h3>
+                <p>الكتب الستة مع البحث والتخريج</p>
+            </a>
+
+            <a href="/prayer-times" class="card feature-card">
+                <div class="feature-icon">🕌</div>
+                <h3>مواقيت الصلاة</h3>
+                <p>أوقات دقيقة حسب موقعك الجغرافي</p>
+            </a>
+
+            <a href="/adhkar" class="card feature-card">
+                <div class="feature-icon">📿</div>
+                <h3>الأذكار</h3>
+                <p>حصن المسلم وأذكار الصباح والمساء</p>
+            </a>
+
+            <a href="/qibla" class="card feature-card">
+                <div class="feature-icon">🧭</div>
+                <h3>القبلة</h3>
+                <p>تحديد اتجاه القبلة بدقة عالية</p>
+            </a>
+
+            <a href="/names" class="card feature-card">
+                <div class="feature-icon">🌟</div>
+                <h3>أسماء الله الحسنى</h3>
+                <p>شرح ومعاني أسماء الله الحسنى</p>
+            </a>
+        </div>
+    </div>
+</section>
+
+<style>
+    .vod-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-top: 2.5rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s;
+    }
+
+    .vod-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .vod-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--primary-300);
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .vod-text {
+        font-family: 'Amiri', serif;
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+        line-height: 1.8;
+    }
+
+    .vod-link {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .vod-surah {
+        color: var(--primary-400);
+    }
+</style>
+{% endblock %}
