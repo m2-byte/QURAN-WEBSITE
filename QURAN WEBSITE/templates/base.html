@@ -1,165 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="dark">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title | default('الموقع الإسلامي') }} | إسلامي</title>
-    <meta name="description"
-        content="{{ description | default('نور الإسلام، قرآن كريم، أحاديث، مواقيت الصلاة والأذكار') }}">
-    <meta name="theme-color" content="#059669">
-    <meta name="author" content="@m2_byte">
-
-    <!-- Open Graph / Social Sharing -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ title | default('الموقع الإسلامي') }}">
-    <meta property="og:description" content="{{ description | default('نور الإسلام — قرآن وسنة وأذكار') }}">
-    <meta property="og:site_name" content="إسلامي">
-    <meta property="og:locale" content="ar_AR">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ title | default('الموقع الإسلامي') }}">
-    <meta name="twitter:description" content="{{ description | default('نور الإسلام') }}">
-    <link rel="canonical" href="{{ request.url }}">
-
-    <!-- PWA -->
-    <link rel="manifest" href="/static/manifest.json">
-    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&family=Scheherazade+New:wght@400;700&display=swap"
-        rel="stylesheet">
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="/static/css/main.css">
-    <link rel="stylesheet" href="/static/css/vip.css">
-
-    <!-- Structured Data for SEO -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "إسلامي VIP",
-        "alternateName": "Islami VIP",
-        "description": "منصة إسلامية متكاملة بتصميم عصري — القرآن الكريم، الحديث الشريف، مواقيت الصلاة، الأذكار",
-        "url": "{{ request.host_url }}",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": "{{ request.host_url }}quran/search?q={search_term}",
-            "query-input": "required name=search_term"
-        }
-    }
-    </script>
-
-    <!-- VIP Scripts -->
-    <script defer src="/static/js/main.js"></script>
-    <script defer src="/static/js/vip.js"></script>
-</head>
-
-<body>
-    <header class="header">
-        <div class="container container-header">
-            <a href="/" class="logo">
-                <div class="logo-icon">🕌</div>
-                <span>إسلامي</span>
-            </a>
-
-            <nav class="nav-desktop">
-                <a href="/quran" class="nav-link {{ 'active' if request.path.startswith('/quran') }}">القرآن الكريم</a>
-                <a href="/hadith" class="nav-link {{ 'active' if request.path.startswith('/hadith') }}">الحديث
-                    الشريف</a>
-                <a href="/prayer-times" class="nav-link {{ 'active' if request.path == '/prayer-times' }}">مواقيت
-                    الصلاة</a>
-                <a href="/adhkar" class="nav-link {{ 'active' if request.path == '/adhkar' }}">الأذكار</a>
-                <a href="/names" class="nav-link {{ 'active' if request.path == '/names' }}">الأسماء الحسنى</a>
-                <a href="/calendar" class="nav-link {{ 'active' if request.path == '/calendar' }}">التقويم الهجري</a>
-                <a href="/qibla" class="nav-link {{ 'active' if request.path == '/qibla' }}">اتجاه القبلة</a>
-            </nav>
-
-            <div class="header-actions">
-                <button class="theme-toggle" onclick="toggleTheme()" aria-label="تغيير الثيم"><span
-                        class="theme-icon">🌙</span></button>
-                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobileMenu">
-        <a href="/quran">القرآن الكريم</a>
-        <a href="/hadith">الحديث الشريف</a>
-        <a href="/prayer-times">مواقيت الصلاة</a>
-        <a href="/adhkar">الأذكار</a>
-        <a href="/names">الأسماء الحسنى</a>
-        <a href="/calendar">التقويم الهجري</a>
-        <a href="/qibla">اتجاه القبلة</a>
-    </div>
-
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- Audio Player (Global) -->
-    <div class="audio-player" id="audioPlayer">
-        <div class="container audio-container">
-            <div class="audio-info">
-                <div class="audio-title" id="audioTitle">سورة الفاتحة</div>
-                <div class="audio-subtitle" id="audioSubtitle">مشاري العفاسي</div>
-            </div>
-
-            <div class="audio-controls">
-                <button class="audio-btn-sm" onclick="prevAyah()">⏮</button>
-                <button class="audio-btn" onclick="togglePlay()" id="playBtn">▶</button>
-                <button class="audio-btn-sm" onclick="nextAyah()">⏭</button>
-            </div>
-
-            <div class="audio-progress">
-                <input type="range" id="audioSeek" value="0" min="0" max="100">
-            </div>
-
-            <button class="close-player" onclick="closePlayer()">×</button>
-        </div>
-    </div>
-
-    <!-- VIP Modals (Hidden by default) -->
-    <div id="vip-modal-container"></div>
-
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-links">
-                <a href="/quran">القرآن</a>
-                <a href="/hadith">الأحاديث</a>
-                <a href="/prayer-times">مواقيت الصلاة</a>
-                <a href="/adhkar">الأذكار</a>
-                <a href="/names">الأسماء الحسنى</a>
-            </div>
-            <div class="footer-social"
-                style="display:flex;align-items:center;justify-content:center;gap:1.5rem;margin:0.75rem 0;">
-                <a href="https://instagram.com/m2_byte" target="_blank" rel="noopener"
-                    style="color:var(--text-secondary);font-size:0.9rem;">
-                    📷 Instagram: @m2_byte
-                </a>
-                <a href="https://t.me/m2_byte" target="_blank" rel="noopener"
-                    style="color:var(--text-secondary);font-size:0.9rem;">
-                    ✈️ Telegram: @m2_byte
-                </a>
-                <a href="https://github.com/m2-byte" target="_blank" rel="noopener"
-                    style="color:var(--text-secondary);font-size:0.9rem;">
-                    💻 GitHub: @m2-byte
-                </a>
-            </div>
-            <p>صُنع بـ ❤️ لخدمة الإسلام والمسلمين</p>
-            <p class="text-xs text-tertiary">© 2026 @m2_byte — جميع الحقوق محفوظة</p>
-        </div>
-    </footer>
-
-    <style>
-        /* Navbar specific styles if needed */
-    </style>
-</body>
-
-</html>
