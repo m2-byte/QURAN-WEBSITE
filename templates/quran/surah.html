@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Surah Header -->
+<div class="surah-header">
+    <div class="container-narrow">
+        <h1>{{ surah.name }}</h1>
+        <p class="text-secondary" style="font-size:1.15rem;">{{ surah.name_en }} — {{ surah.meaning }}</p>
+        <div class="surah-header-meta">
+            <span class="badge {% if surah.type == 'meccan' %}badge-meccan{% else %}badge-medinan{% endif %}">
+                {{ 'مكية' if surah.type == 'meccan' else 'مدنية' }}
+            </span>
+            <span>{{ surah.verses }} آية</span>
+            <span>سورة {{ surah.id }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Panel -->
+<div class="container-narrow mb-3">
+    <div class="settings-panel">
+        <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;">
+            <!-- Translation Select -->
+            <div class="settings-group" style="flex:1;min-width:200px;margin-bottom:0;">
+                <label class="settings-label">الترجمة</label>
+                <select class="select-input" id="translationSelect" onchange="changeTranslation(this.value)">
+                    <option value="">بدون ترجمة</option>
+                    {% for key, label in translations.items() %}
+                    <option value="{{ key }}" {% if current_translation==key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Reciter Select -->
+            <div class="settings-group" style="flex:1;min-width:200px;margin-bottom:0;">
+                <label class="settings-label">القارئ</label>
+                <select class="select-input" id="reciterSelect">
+                    {% for r in reciters %}
+                    <option value="{{ r.id }}">{{ r.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Font Size -->
+            <div class="settings-group" style="flex:0 0 160px;margin-bottom:0;">
+                <label class="settings-label">حجم الخط</label>
+                <input type="range" class="font-slider" min="1" max="4" value="2" id="fontSlider"
+                    oninput="changeFontSize(this.value)">
+            </div>
+
+            <!-- Play All -->
+            <button class="btn btn-primary" onclick="playAllSurah()" style="flex-shrink:0;">
+                ▶ تشغيل السورة
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bismillah -->
+{% if surah.id != 9 %}
+<div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+{% endif %}
+
+<!-- Verses -->
+<div class="container-narrow" id="versesContainer">
+    {% for verse in verses %}
+    <div class="verse-card" id="verse-{{ loop.index }}" data-ayah="{{ loop.index }}">
+        <div class="verse-header">
+            <div class="verse-num">{{ loop.index }}</div>
+            <div class="verse-actions">
+                <button class="verse-btn" onclick="playAyah({{ surah.id }}, {{ loop.index }})" title="تشغيل"
+                    aria-label="تشغيل الآية">▶</button>
+                <button class="verse-btn" onclick="toggleBookmark({{ surah.id }}, {{ loop.index }})" title="حفظ"
+                    id="bm-{{ surah.id }}-{{ loop.index }}" aria-label="حفظ الآية">🔖</button>
+                <button class="verse-btn" onclick="showTafsir({{ surah.id }}, {{ loop.index }}, this)" title="التفسير"
+                    aria-label="عرض التفسير">📖</button>
+                <button class="verse-btn" onclick="shareVerse({{ surah.id }}, {{ loop.index }})" title="مشاركة"
+                    aria-label="مشاركة الآية">📤</button>
+            </div>
+        </div>
+
+        <p class="verse-text">{{ verse.text }}</p>
+
+        {% if trans_verses %}
+        {% set trans = trans_verses | get_at_index(loop.index0) %}
+        {% if trans %}
+        <div class="verse-translation">
+            {{ trans.text }}
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Navigation -->
+<div class="container-narrow py-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        {% if prev_surah %}
+        <a href="/quran/{{ prev_surah.id }}?translation={{ current_translation }}" class="btn btn-secondary">
+            → {{ prev_surah.name }}
+        </a>
+        {% else %}
+        <div></div>
+        {% endif %}
+
+        <a href="/quran" class="btn btn-ghost">جميع السور</a>
+
+        {% if next_surah %}
+        <a href="/quran/{{ next_surah.id }}?translation={{ current_translation }}" class="btn btn-secondary">
+            {{ next_surah.name }} ←
+        </a>
+        {% else %}
+        <div></div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    const SURAH_ID = {{ surah.id }};
+    const SURAH_NAME = "{{ surah.name }}";
+    const TOTAL_AYAHS = {{ surah.verses }};
+
+    function changeTranslation(val) {
+        const url = new URL(window.location);
+        if (val) {
+            url.searchParams.set('translation', val);
+        } else {
+            url.searchParams.delete('translation');
+        }
+        window.location = url;
+    }
+
+    function changeFontSize(val) {
+        const container = document.getElementById('versesContainer');
+        const sizes = { 1: 'font-sm', 2: 'font-md', 3: 'font-lg', 4: 'font-xl' };
+        container.className = 'container-narrow ' + (sizes[val] || 'font-md');
+        localStorage.setItem('quran-font-size', val);
+    }
+
+    // Restore font size
+    document.addEventListener('DOMContentLoaded', function () {
+        const saved = localStorage.getItem('quran-font-size');
+        if (saved) {
+            document.getElementById('fontSlider').value = saved;
+            changeFontSize(saved);
+        }
+        // Mark bookmarks
+        const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+        bookmarks.forEach(b => {
+            const el = document.getElementById(`bm-${b.surah}-${b.ayah}`);
+            if (el) el.classList.add('bookmarked');
+        });
+    });
+
+    function playAyah(surah, ayah) {
+        const reciter = document.getElementById('reciterSelect').value;
+        fetch(`/api/audio-url?surah=${surah}&ayah=${ayah}&reciter=${reciter}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.audio_url) {
+                    window.playAudio(data.audio_url, `${SURAH_NAME} — آية ${ayah}`, reciter);
+                    // Highlight verse
+                    document.querySelectorAll('.verse-card').forEach(v => v.style.borderColor = '');
+                    const card = document.getElementById(`verse-${ayah}`);
+                    if (card) {
+                        card.style.borderColor = 'var(--primary-500)';
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+    }
+
+    let currentPlayAyah = 1;
+    let _surahAudioHandler = null;
+    function playAllSurah() {
+        currentPlayAyah = 1;
+        // Remove previous listener to prevent leak
+        if (_surahAudioHandler) {
+            window.removeEventListener('audioEnded', _surahAudioHandler);
+        }
+        _surahAudioHandler = function () {
+            currentPlayAyah++;
+            if (currentPlayAyah <= TOTAL_AYAHS) {
+                playAyah(SURAH_ID, currentPlayAyah);
+            } else {
+                window.removeEventListener('audioEnded', _surahAudioHandler);
+                _surahAudioHandler = null;
+            }
+        };
+        window.addEventListener('audioEnded', _surahAudioHandler);
+        playAyah(SURAH_ID, currentPlayAyah);
+    }
+
+    window.nextAyahCallback = function () {
+        if (currentPlayAyah < TOTAL_AYAHS) {
+            currentPlayAyah++;
+            playAyah(SURAH_ID, currentPlayAyah);
+        }
+    };
+    window.prevAyahCallback = function () {
+        if (currentPlayAyah > 1) {
+            currentPlayAyah--;
+            playAyah(SURAH_ID, currentPlayAyah);
+        }
+    };
+
+    function toggleBookmark(surah, ayah) {
+        let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+        const idx = bookmarks.findIndex(b => b.surah === surah && b.ayah === ayah);
+        const el = document.getElementById(`bm-${surah}-${ayah}`);
+        if (idx !== -1) {
+            bookmarks.splice(idx, 1);
+            if (el) el.classList.remove('bookmarked');
+        } else {
+            bookmarks.push({ surah, ayah, name: SURAH_NAME, date: new Date().toISOString() });
+            if (el) el.classList.add('bookmarked');
+        }
+        localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+    }
+
+    function shareVerse(surah, ayah) {
+        const verse = document.querySelector(`#verse-${ayah} .verse-text`);
+        const text = verse ? verse.textContent.trim() : '';
+        const shareText = `${text}\n\n— سورة ${SURAH_NAME}، آية ${ayah}`;
+        if (navigator.share) {
+            navigator.share({ text: shareText, title: `سورة ${SURAH_NAME} — آية ${ayah}` });
+        } else {
+            navigator.clipboard.writeText(shareText).then(() => {
+                if (typeof showToast === 'function') showToast('✅ تم النسخ');
+            });
+        }
+    }
+
+    // ── Tafsir Panel ──────────────────────────────────────
+    const _tafsirCache = {};
+    function showTafsir(surah, ayah, btn) {
+        const card = document.getElementById(`verse-${ayah}`);
+        if (!card) return;
+
+        // Toggle: if already showing, close it
+        const existing = card.querySelector('.tafsir-panel');
+        if (existing) {
+            existing.remove();
+            btn.classList.remove('active');
+            return;
+        }
+
+        // Check cache first
+        const cacheKey = `${surah}:${ayah}`;
+        if (_tafsirCache[cacheKey]) {
+            renderTafsir(card, _tafsirCache[cacheKey], btn);
+            return;
+        }
+
+        // Show loading
+        btn.textContent = '⏳';
+        fetch(`/api/tafsir/${surah}/${ayah}`)
+            .then(r => r.json())
+            .then(data => {
+                btn.textContent = '📖';
+                const text = data.text || 'لم يتم العثور على تفسير لهذه الآية';
+                _tafsirCache[cacheKey] = text;
+                renderTafsir(card, text, btn);
+            })
+            .catch(() => {
+                btn.textContent = '📖';
+                if (typeof showToast === 'function') showToast('⚠️ تعذر تحميل التفسير');
+            });
+    }
+
+    function renderTafsir(card, text, btn) {
+        btn.classList.add('active');
+        const panel = document.createElement('div');
+        panel.className = 'tafsir-panel';
+        panel.innerHTML = `
+            <div class="tafsir-label">📖 التفسير الميسر</div>
+            <p class="tafsir-text">${text}</p>
+        `;
+        card.appendChild(panel);
+        // Smooth scroll to show tafsir
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+</script>
+
+<style>
+    .tafsir-panel {
+        margin-top: 1rem;
+        padding: 1.25rem;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        border-right: 4px solid var(--primary-500);
+        animation: slideDown 0.3s ease;
+    }
+
+    .tafsir-label {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--primary-500);
+        margin-bottom: 0.75rem;
+    }
+
+    .tafsir-text {
+        font-family: 'Amiri', serif;
+        font-size: 1.15rem;
+        line-height: 2;
+        color: var(--text-secondary);
+    }
+
+    .verse-btn.active {
+        color: var(--primary-500) !important;
+        background: var(--primary-50);
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            max-height: 0;
+        }
+
+        to {
+            opacity: 1;
+            max-height: 500px;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="page-header">
+        <h1>بحث في الأحاديث النبوية</h1>
+        <p>ابحث عن أي كلمة أو عبارة في الأحاديث الشريفة</p>
+    </div>
+
+    <form action="/hadith/search" method="get" style="max-width:560px;margin:0 auto 2rem;">
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" name="q" class="search-input" placeholder="ابحث في الأحاديث..." value="{{ query }}"
+                autofocus>
+        </div>
+    </form>
+
+    {% if query %}
+    <div class="container-narrow">
+        <p class="text-secondary mb-2" style="font-size:0.95rem;">
+            {% if results %}تم العثور على {{ results|length }} نتيجة{% else %}لا توجد نتائج{% endif %}
+            لـ "{{ query }}"
+        </p>
+
+        {% for h in results %}
+        <div class="hadith-card">
+            <div class="hadith-header">
+                <span class="hadith-number">{{ h.collection }} — حديث {{ h.hadithnumber }}</span>
+                <a href="/hadith/{{ h.collection_id }}" class="btn btn-ghost" style="font-size:0.85rem;">عرض
+                    المجموعة</a>
+            </div>
+            <p class="hadith-text">{{ h.text[:300] }}{% if h.text|length > 300 %}...{% endif %}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
